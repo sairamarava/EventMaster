@@ -1,52 +1,128 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { FaCalendarPlus, FaImage, FaCheck, FaTimes, FaUpload, FaStar } from 'react-icons/fa';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  FaCalendarPlus,
+  FaCheck,
+  FaTimes,
+  FaUpload,
+  FaStar,
+  FaEdit,
+} from "react-icons/fa";
 
-export default function EventForm({ onEventAdded }) {
+export default function EventForm({
+  onEventAdded,
+  editingEvent,
+  onEventUpdated,
+  onCancelEdit,
+}) {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    date: '',
-    category: 'academic',
-    status: 'upcoming',
+    title: "",
+    description: "",
+    date: "",
+    category: "academic",
+    status: "upcoming",
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load editing event data
+  useEffect(() => {
+    if (editingEvent) {
+      setFormData({
+        title: editingEvent.title || "",
+        description: editingEvent.description || "",
+        date: editingEvent.date
+          ? new Date(editingEvent.date).toISOString().split("T")[0]
+          : "",
+        category: editingEvent.category || "academic",
+        status: editingEvent.status || "upcoming",
+      });
+
+      // Set image preview if event has an image
+      if (editingEvent.image) {
+        setImagePreview(
+          `http://localhost:5000/api/events/${editingEvent._id}/image`
+        );
+      } else {
+        setImagePreview(null);
+      }
+
+      setSelectedFile(null);
+      setErrors({});
+    } else {
+      // Reset form for new event
+      setFormData({
+        title: "",
+        description: "",
+        date: "",
+        category: "academic",
+        status: "upcoming",
+      });
+      setSelectedFile(null);
+      setImagePreview(null);
+      setErrors({});
+    }
+  }, [editingEvent]);
+
   const categories = [
-    { value: 'academic', label: 'Academic', icon: '📚', color: 'from-blue-500 to-purple-600' },
-    { value: 'cultural', label: 'Cultural', icon: '🎭', color: 'from-pink-500 to-rose-600' },
-    { value: 'sports', label: 'Sports', icon: '⚽', color: 'from-green-500 to-emerald-600' },
-    { value: 'technical', label: 'Technical', icon: '💻', color: 'from-indigo-500 to-blue-600' },
-    { value: 'social', label: 'Social', icon: '🤝', color: 'from-orange-500 to-red-600' },
+    {
+      value: "academic",
+      label: "Academic",
+      icon: "📚",
+      color: "from-blue-500 to-purple-600",
+    },
+    {
+      value: "cultural",
+      label: "Cultural",
+      icon: "🎭",
+      color: "from-pink-500 to-rose-600",
+    },
+    {
+      value: "sports",
+      label: "Sports",
+      icon: "⚽",
+      color: "from-green-500 to-emerald-600",
+    },
+    {
+      value: "technical",
+      label: "Technical",
+      icon: "💻",
+      color: "from-indigo-500 to-blue-600",
+    },
+    {
+      value: "social",
+      label: "Social",
+      icon: "🤝",
+      color: "from-orange-500 to-red-600",
+    },
   ];
 
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Event title is required';
+      newErrors.title = "Event title is required";
     } else if (formData.title.length < 3) {
-      newErrors.title = 'Title must be at least 3 characters long';
+      newErrors.title = "Title must be at least 3 characters long";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Event description is required';
+      newErrors.description = "Event description is required";
     } else if (formData.description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters long';
+      newErrors.description = "Description must be at least 10 characters long";
     }
 
     if (!formData.date) {
-      newErrors.date = 'Event date is required';
+      newErrors.date = "Event date is required";
     } else {
       const selectedDate = new Date(formData.date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (selectedDate < today) {
-        newErrors.date = 'Event date cannot be in the past';
+        newErrors.date = "Event date cannot be in the past";
       }
     }
 
@@ -58,20 +134,23 @@ export default function EventForm({ onEventAdded }) {
     const file = e.target.files[0];
     if (file) {
       // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-      if (!allowedTypes.includes(file.type)) {
-        setErrors({ ...errors, image: 'Please select a valid image file (.jpg, .jpeg, .png)' });
+      const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+      if (!validTypes.includes(file.type)) {
+        setErrors({
+          ...errors,
+          image: "Please select a valid image file (JPG, JPEG, PNG)",
+        });
         return;
       }
 
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        setErrors({ ...errors, image: 'File size must be less than 5MB' });
+        setErrors({ ...errors, image: "File size must be less than 5MB" });
         return;
       }
 
       setSelectedFile(file);
-      setErrors({ ...errors, image: '' });
+      setErrors({ ...errors, image: "" });
 
       // Create preview
       const reader = new FileReader();
@@ -84,111 +163,133 @@ export default function EventForm({ onEventAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('date', formData.date);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('status', formData.status);
-      
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("date", formData.date);
+      formDataToSend.append("category", formData.category);
+      formDataToSend.append("status", formData.status);
+
       if (selectedFile) {
-        formDataToSend.append('image', selectedFile);
+        formDataToSend.append("image", selectedFile);
       }
 
-      const response = await fetch('http://localhost:5000/api/events', {
-        method: 'POST',
+      const url = editingEvent
+        ? `http://localhost:5000/api/events/${editingEvent._id}`
+        : "http://localhost:5000/api/events";
+
+      const method = editingEvent ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method: method,
         body: formDataToSend,
       });
 
       if (response.ok) {
-        const newEvent = await response.json();
-        
-        // Reset form
-        setFormData({
-          title: '',
-          description: '',
-          date: '',
-          category: 'academic',
-          status: 'upcoming',
-        });
-        setSelectedFile(null);
-        setImagePreview(null);
-        setErrors({});
-        
-        // Show success message
-        showSuccessMessage();
-        
-        // Notify parent component
-        if (onEventAdded) {
-          onEventAdded(newEvent);
+        const eventData = await response.json();
+
+        if (editingEvent) {
+          // Call update callback
+          if (onEventUpdated) {
+            onEventUpdated(eventData);
+          }
+        } else {
+          // Call create callback
+          if (onEventAdded) {
+            onEventAdded(eventData);
+          }
+
+          // Reset form only if creating new event
+          setFormData({
+            title: "",
+            description: "",
+            date: "",
+            category: "academic",
+            status: "upcoming",
+          });
+          setSelectedFile(null);
+          setImagePreview(null);
+          setErrors({});
         }
       } else {
         const errorData = await response.json();
-        setErrors({ submit: errorData.message || 'Failed to create event' });
+        setErrors({ submit: errorData.message || "Something went wrong!" });
       }
     } catch (error) {
-      setErrors({ submit: 'Network error. Please try again.' });
+      console.error("Error submitting form:", error);
+      setErrors({ submit: "Network error. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const showSuccessMessage = () => {
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-green-500 to-teal-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
-    notification.innerHTML = `
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-      </svg>
-      Event created successfully! 🎉
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.remove();
-    }, 3000);
+  const handleClearForm = () => {
+    if (editingEvent && onCancelEdit) {
+      onCancelEdit();
+    } else {
+      setFormData({
+        title: "",
+        description: "",
+        date: "",
+        category: "academic",
+        status: "upcoming",
+      });
+      setSelectedFile(null);
+      setImagePreview(null);
+      setErrors({});
+    }
   };
-
-  const selectedCategory = categories.find(cat => cat.value === formData.category);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="card-energetic max-w-4xl mx-auto p-8"
+      className="glow-card max-w-4xl mx-auto p-8"
     >
       <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-gradient-to-r from-primary to-secondary rounded-full">
-          <FaCalendarPlus className="text-white text-2xl" />
+        <div className="p-3 bg-gray-100 rounded-full">
+          {editingEvent ? (
+            <FaEdit className="text-primary text-2xl" />
+          ) : (
+            <FaCalendarPlus className="text-primary text-2xl" />
+          )}
         </div>
         <div>
-          <h2 className="text-3xl font-bold font-display gradient-text">Create Amazing Event</h2>
-          <p className="text-gray-600">Design an unforgettable experience for your audience</p>
+          <h2 className="text-3xl font-bold font-display text-gray-800">
+            {editingEvent ? "Edit Event" : "Create Amazing Event"}
+          </h2>
+          <p className="text-gray-600">
+            {editingEvent
+              ? "Update your event details"
+              : "Design an unforgettable experience for your audience"}
+          </p>
         </div>
-        <FaStar className="text-accent text-2xl animate-pulse ml-auto" />
+        <FaStar className="text-primary text-2xl ml-auto" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Title Field */}
         <div className="space-y-2">
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-            Event Title ✨
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Title
           </label>
           <input
             type="text"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className={`w-full px-4 py-3 rounded-2xl border-2 focus:border-primary focus:outline-none transition-all duration-300 font-medium ${
-              errors.title ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-primary/50'
+            onChange={(e) =>
+              setFormData({ ...formData, title: e.target.value })
+            }
+            className={`form-input ${
+              errors.title ? "border-red-500 bg-red-50" : ""
             }`}
             placeholder="Enter an exciting event title..."
             disabled={isSubmitting}
@@ -202,26 +303,29 @@ export default function EventForm({ onEventAdded }) {
         </div>
 
         {/* Category Selection */}
-        <div className="space-y-2">
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-            Event Category 🎯
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Category
           </label>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {categories.map((category) => (
               <motion.button
                 key={category.value}
                 type="button"
-                onClick={() => setFormData({ ...formData, category: category.value })}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`p-4 rounded-2xl border-2 transition-all duration-300 ${
+                onClick={() =>
+                  setFormData({ ...formData, category: category.value })
+                }
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`p-4 rounded-lg border-2 transition-all duration-300 flex flex-col items-center gap-2 ${
                   formData.category === category.value
-                    ? `bg-gradient-to-r ${category.color} border-transparent text-white shadow-lg`
-                    : 'border-gray-200 hover:border-primary/50 bg-white'
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-gray-200 bg-white hover:border-primary/50"
                 }`}
+                disabled={isSubmitting}
               >
-                <div className="text-2xl mb-1">{category.icon}</div>
-                <div className="font-bold text-sm">{category.label}</div>
+                <span className="text-2xl">{category.icon}</span>
+                <span className="text-sm font-medium">{category.label}</span>
               </motion.button>
             ))}
           </div>
@@ -229,15 +333,17 @@ export default function EventForm({ onEventAdded }) {
 
         {/* Description Field */}
         <div className="space-y-2">
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-            Event Description 📝
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Description
           </label>
           <textarea
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
             rows={4}
-            className={`w-full px-4 py-3 rounded-2xl border-2 focus:border-primary focus:outline-none transition-all duration-300 font-medium resize-none ${
-              errors.description ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-primary/50'
+            className={`form-textarea ${
+              errors.description ? "border-red-500 bg-red-50" : ""
             }`}
             placeholder="Describe your amazing event in detail..."
             disabled={isSubmitting}
@@ -252,15 +358,15 @@ export default function EventForm({ onEventAdded }) {
 
         {/* Date Field */}
         <div className="space-y-2">
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-            Event Date 📅
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Date
           </label>
           <input
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            className={`w-full px-4 py-3 rounded-2xl border-2 focus:border-primary focus:outline-none transition-all duration-300 font-medium ${
-              errors.date ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-primary/50'
+            className={`form-input ${
+              errors.date ? "border-red-500 bg-red-50" : ""
             }`}
             disabled={isSubmitting}
           />
@@ -272,10 +378,29 @@ export default function EventForm({ onEventAdded }) {
           )}
         </div>
 
+        {/* Status Field */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Status
+          </label>
+          <select
+            value={formData.status}
+            onChange={(e) =>
+              setFormData({ ...formData, status: e.target.value })
+            }
+            className="form-select"
+            disabled={isSubmitting}
+          >
+            <option value="upcoming">Upcoming</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
         {/* Image Upload */}
         <div className="space-y-2">
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-            Event Image 🖼️
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Image
           </label>
           <div className="relative">
             <input
@@ -288,29 +413,30 @@ export default function EventForm({ onEventAdded }) {
             />
             <label
               htmlFor="image-upload"
-              className="w-full flex flex-col items-center justify-center py-8 border-2 border-dashed border-gray-300 rounded-2xl hover:border-primary/50 transition-all duration-300 cursor-pointer bg-gradient-to-br from-gray-50 to-gray-100 hover:from-primary/10 hover:to-secondary/10"
+              className="w-full flex flex-col items-center justify-center py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary/50 transition-all duration-300 cursor-pointer bg-gray-50 hover:bg-gray-100"
             >
               <FaUpload className="text-4xl text-gray-400 mb-4" />
               <p className="text-gray-600 font-medium mb-2">
-                {selectedFile ? selectedFile.name : 'Click to upload event image'}
+                {selectedFile
+                  ? selectedFile.name
+                  : "Click to upload event image"}
               </p>
               <p className="text-sm text-gray-500">
                 Support: JPG, PNG, JPEG (Max 5MB)
               </p>
             </label>
           </div>
-          
+
           {imagePreview && (
             <div className="mt-4">
-              <p className="text-sm font-bold text-gray-700 mb-2">Preview:</p>
               <img
                 src={imagePreview}
                 alt="Event preview"
-                className="w-full h-48 object-cover rounded-2xl shadow-lg"
+                className="w-full h-48 object-cover rounded-lg shadow-md"
               />
             </div>
           )}
-          
+
           {errors.image && (
             <p className="text-red-500 text-sm font-medium flex items-center gap-1">
               <FaTimes className="text-xs" />
@@ -321,46 +447,38 @@ export default function EventForm({ onEventAdded }) {
 
         {/* Submit Error */}
         {errors.submit && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4">
-            <p className="text-red-700 font-medium flex items-center gap-2">
-              <FaTimes />
-              {errors.submit}
-            </p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700 font-medium">{errors.submit}</p>
           </div>
         )}
 
         {/* Submit Buttons */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 pt-6">
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn-energetic flex-1 flex items-center justify-center gap-2 text-lg py-4"
+            className="flex-1 bg-primary hover:bg-gray-800 text-white px-8 py-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
           >
             {isSubmitting ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Creating Magic...
+                {editingEvent ? "Updating..." : "Creating Magic..."}
               </>
             ) : (
               <>
                 <FaCheck />
-                Create Event 🚀
+                {editingEvent ? "Update Event" : "Create Event 🚀"}
               </>
             )}
           </button>
-          
+
           <button
             type="button"
-            onClick={() => {
-              setFormData({ title: '', description: '', date: '', category: 'academic', status: 'upcoming' });
-              setSelectedFile(null);
-              setImagePreview(null);
-              setErrors({});
-            }}
-            className="px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all duration-300 hover:scale-105"
+            onClick={handleClearForm}
+            className="px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all duration-300"
             disabled={isSubmitting}
           >
-            Reset Form
+            {editingEvent ? "Cancel Edit" : "Clear Form"}
           </button>
         </div>
       </form>

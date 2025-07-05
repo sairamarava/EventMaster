@@ -132,7 +132,7 @@ export default function Home() {
                   placeholder="Search events..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input-minimal pl-12"
+                  className="form-input pl-12"
                 />
               </div>
 
@@ -142,7 +142,7 @@ export default function Home() {
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="input-minimal pl-12 min-w-48"
+                  className="form-select pl-12 min-w-48"
                 >
                   {categories.map((category) => (
                     <option key={category.value} value={category.value}>

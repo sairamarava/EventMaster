@@ -1,14 +1,7 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import {
-  FaUser,
-  FaSignOutAlt,
-  FaHome,
-  FaCalendarPlus,
-  FaStar,
-  FaBolt,
-} from "react-icons/fa";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { FaUser, FaSignOutAlt, FaHome, FaCalendarPlus, FaStar, FaBolt } from 'react-icons/fa';
 
 export default function Header() {
   const { isAuthenticated, logout } = useAuth();
@@ -21,44 +14,31 @@ export default function Header() {
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate('/');
   };
 
   return (
-    <>
-      {" "}
-      <header className="header-minimal sticky top-0 z-50 shadow-sm">
+    <>      <header className="header-minimal sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <Link
-              to="/"
-              className="flex items-center gap-3 text-gray-800 hover:text-primary transition-colors group"
-            >
+            <Link to="/" className="flex items-center gap-3 text-gray-800 hover:text-primary transition-colors group">
               <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-all duration-300">
                 <FaBolt className="text-xl text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold font-display">
-                  EventMaster
-                </h1>
+                <h1 className="text-2xl font-semibold font-display">EventMaster</h1>
                 <p className="text-xs text-gray-500">College Events Hub</p>
               </div>
             </Link>
 
             <nav className="hidden md:flex space-x-6">
-              <Link
-                to="/"
-                className="text-gray-600 hover:text-primary transition-colors flex items-center gap-2 font-medium"
-              >
+              <Link to="/" className="text-gray-600 hover:text-primary transition-colors flex items-center gap-2 font-medium">
                 <FaHome />
                 <span>Home</span>
               </Link>
               {isAuthenticated && (
-                <Link
-                  to="/admin"
-                  className="text-gray-600 hover:text-primary transition-colors flex items-center gap-2 font-medium"
-                >
-                  <FaCalendarPlus />
+                <Link to="/admin" className="text-gray-600 hover:text-primary transition-colors flex items-center gap-2 font-medium">
+                  <FaCalendarPlus /> 
                   <span>Create Event</span>
                 </Link>
               )}
@@ -92,35 +72,36 @@ export default function Header() {
           </div>
         </div>
       </header>
+
       {/* Login Modal */}
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
       />
     </>
   );
 }
 
 function LoginModal({ isOpen, onClose }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { login, loading } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     if (!username || !password) {
-      setError("Please fill in all fields");
+      setError('Please fill in all fields');
       return;
     }
 
     const result = await login(username, password);
     if (result.success) {
       onClose();
-      setUsername("");
-      setPassword("");
+      setUsername('');
+      setPassword('');
     } else {
       setError(result.message);
     }
@@ -128,9 +109,9 @@ function LoginModal({ isOpen, onClose }) {
 
   const handleClose = () => {
     onClose();
-    setUsername("");
-    setPassword("");
-    setError("");
+    setUsername('');
+    setPassword('');
+    setError('');
   };
 
   if (!isOpen) return null;
@@ -144,9 +125,7 @@ function LoginModal({ isOpen, onClose }) {
               <FaUser className="text-primary text-xl" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold font-display text-gray-800">
-                Admin Login
-              </h2>
+              <h2 className="text-2xl font-bold font-display text-gray-800">Admin Login</h2>
               <p className="text-gray-600 text-sm">Access your dashboard</p>
             </div>
           </div>

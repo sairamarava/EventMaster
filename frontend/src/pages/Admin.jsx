@@ -11,6 +11,10 @@ import {
   FaStar,
   FaCrown,
   FaFire,
+  FaEdit,
+  FaTrash,
+  FaTimes,
+  FaCheck,
 } from "react-icons/fa";
 
 export default function Admin() {
@@ -18,6 +22,10 @@ export default function Admin() {
   const [events, setEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("add");
   const [loading, setLoading] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -42,6 +50,52 @@ export default function Admin() {
 
   const handleEventAdded = (newEvent) => {
     setEvents([newEvent, ...events]);
+    setActiveTab("manage");
+  };
+
+  const handleEditEvent = (event) => {
+    setEditingEvent(event);
+    setActiveTab("add");
+  };
+
+  const handleDeleteEvent = (event) => {
+    setEventToDelete(event);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventToDelete) return;
+
+    setDeleteLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/events/${eventToDelete._id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        setEvents(events.filter((event) => event._id !== eventToDelete._id));
+        setShowDeleteModal(false);
+        setEventToDelete(null);
+      } else {
+        console.error("Failed to delete event");
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleEventUpdated = (updatedEvent) => {
+    setEvents(
+      events.map((event) =>
+        event._id === updatedEvent._id ? updatedEvent : event
+      )
+    );
+    setEditingEvent(null);
     setActiveTab("manage");
   };
 
@@ -185,10 +239,18 @@ export default function Admin() {
                         </div>
                         {/* Admin Actions */}
                         <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
-                          <button className="bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-lg font-medium transition-all duration-300">
+                          <button
+                            onClick={() => handleEditEvent(event)}
+                            className="bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2"
+                          >
+                            <FaEdit />
                             Edit
                           </button>
-                          <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300">
+                          <button
+                            onClick={() => handleDeleteEvent(event)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2"
+                          >
+                            <FaTrash />
                             Delete
                           </button>
                         </div>
@@ -201,6 +263,63 @@ export default function Admin() {
           )}
         </motion.div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="modal-card w-96 max-w-md mx-4 p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-red-100 rounded-full">
+                <FaTrash className="text-red-600 text-xl" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800">
+                  Delete Event
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  This action cannot be undone
+                </p>
+              </div>
+            </div>
+
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete "
+              <span className="font-medium">{eventToDelete?.title}</span>"?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                {deleteLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <FaCheck />
+                    Delete
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setEventToDelete(null);
+                }}
+                disabled={deleteLoading}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <FaTimes />
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
