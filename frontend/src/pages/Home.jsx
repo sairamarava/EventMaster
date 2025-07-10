@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import EventCard from "../components/EventCard";
+import api from "../utils/api";
 import {
   FaCalendarAlt,
   FaSearch,
@@ -34,16 +35,12 @@ export default function Home() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/events");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch events");
-      }
-
-      const data = await response.json();
-      setEvents(data);
+      const response = await api.get("/events");
+      setEvents(response.data);
     } catch (err) {
-      setError(err.message);
+      setError(
+        err.response?.data?.message || err.message || "Failed to fetch events"
+      );
     } finally {
       setLoading(false);
     }

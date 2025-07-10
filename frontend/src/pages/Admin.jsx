@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import EventForm from "../components/EventForm";
 import EventCard from "../components/EventCard";
+import api from "../utils/api";
 import {
   FaCalendarAlt,
   FaPlus,
@@ -36,11 +37,8 @@ export default function Admin() {
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/events");
-      if (response.ok) {
-        const data = await response.json();
-        setEvents(data);
-      }
+      const response = await api.get("/events");
+      setEvents(response.data);
     } catch (error) {
       console.error("Error fetching events:", error);
     } finally {
@@ -68,20 +66,10 @@ export default function Admin() {
 
     setDeleteLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/events/${eventToDelete._id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        setEvents(events.filter((event) => event._id !== eventToDelete._id));
-        setShowDeleteModal(false);
-        setEventToDelete(null);
-      } else {
-        console.error("Failed to delete event");
-      }
+      await api.delete(`/events/${eventToDelete._id}`);
+      setEvents(events.filter((event) => event._id !== eventToDelete._id));
+      setShowDeleteModal(false);
+      setEventToDelete(null);
     } catch (error) {
       console.error("Error deleting event:", error);
     } finally {

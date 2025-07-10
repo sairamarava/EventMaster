@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import api from "../utils/api";
 import {
   FaCalendarPlus,
   FaCheck,
@@ -43,7 +44,11 @@ export default function EventForm({
       // Set image preview if event has an image
       if (editingEvent.image) {
         setImagePreview(
-          `http://localhost:5000/api/events/${editingEvent._id}/image`
+          `${
+            import.meta.env.MODE === "development"
+              ? "http://localhost:5000"
+              : ""
+          }/api/events/${editingEvent._id}/image`
         );
       } else {
         setImagePreview(null);
@@ -182,50 +187,49 @@ export default function EventForm({
         formDataToSend.append("image", selectedFile);
       }
 
-      const url = editingEvent
-        ? `http://localhost:5000/api/events/${editingEvent._id}`
-        : "http://localhost:5000/api/events";
+      const url = editingEvent ? `/events/${editingEvent._id}` : "/events";
+      const method = editingEvent ? "put" : "post";
 
-      const method = editingEvent ? "PUT" : "POST";
-
-      const response = await fetch(url, {
+      const response = await api({
         method: method,
-        body: formDataToSend,
+        url: url,
+        data: formDataToSend,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      if (response.ok) {
-        const eventData = await response.json();
+      const eventData = response.data;
 
-        if (editingEvent) {
-          // Call update callback
-          if (onEventUpdated) {
-            onEventUpdated(eventData);
-          }
-        } else {
-          // Call create callback
-          if (onEventAdded) {
-            onEventAdded(eventData);
-          }
-
-          // Reset form only if creating new event
-          setFormData({
-            title: "",
-            description: "",
-            date: "",
-            category: "academic",
-            status: "upcoming",
-          });
-          setSelectedFile(null);
-          setImagePreview(null);
-          setErrors({});
+      if (editingEvent) {
+        // Call update callback
+        if (onEventUpdated) {
+          onEventUpdated(eventData);
         }
       } else {
-        const errorData = await response.json();
-        setErrors({ submit: errorData.message || "Something went wrong!" });
+        // Call create callback
+        if (onEventAdded) {
+          onEventAdded(eventData);
+        }
+
+        // Reset form only if creating new event
+        setFormData({
+          title: "",
+          description: "",
+          date: "",
+          category: "academic",
+          status: "upcoming",
+        });
+        setSelectedFile(null);
+        setImagePreview(null);
+        setErrors({});
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      setErrors({ submit: "Network error. Please try again." });
+      setErrors({
+        submit:
+          error.response?.data?.message || "Network error. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }

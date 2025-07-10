@@ -1,0 +1,29 @@
+{
+  "name": "event-manager",
+  "version": "1.0.0",
+  "description": "A premium event management application",
+  "main": "backend/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "node backend/server.js",
+    "dev": "cd backend && npm run dev",
+    "install-client": "cd frontend && npm install",
+    "install-server": "cd backend && npm install",
+    "install-all": "npm run install-server && npm run install-client",
+    "heroku-postbuild": "npm run build"
+  },
+  "keywords": [
+    "event",
+    "management",
+    "react",
+    "node",
+    "express",
+    "mongodb"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

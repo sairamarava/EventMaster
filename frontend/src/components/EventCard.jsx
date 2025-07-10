@@ -45,7 +45,9 @@ export default function EventCard({ event, index }) {
   };
 
   const imageUrl = event.image
-    ? `http://localhost:5000/api/events/${event._id}/image`
+    ? `${
+        import.meta.env.MODE === "development" ? "http://localhost:5000" : ""
+      }/api/events/${event._id}/image`
     : null;
 
   return (
