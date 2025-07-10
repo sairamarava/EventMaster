@@ -166,12 +166,12 @@ export default function Home() {
               <FaCalendarAlt className="text-primary text-xl" />
             </div>
             <div>
-              <h2 className="text-3xl font-semibold text-gray-900">
+              <h2 className="btn-minimal flex items-center gap-2">
                 {filteredEvents.length > 0
                   ? "Upcoming Events"
                   : "No Events Found"}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-white text-sm font-bold">
                 {filteredEvents.length} events found{" "}
                 {filterCategory !== "all" &&
                   `in ${

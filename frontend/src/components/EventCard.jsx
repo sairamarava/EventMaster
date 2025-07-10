@@ -68,12 +68,12 @@ export default function EventCard({ event, index }) {
       </div>
 
       {/* Image Section */}
-      <div className="relative h-48 overflow-hidden bg-gray-100">
+      <div className="relative h-48 overflow-hidden bg-gray-100 rounded-lg">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-lg"
             onError={(e) => {
               e.target.style.display = "none";
               e.target.nextSibling.style.display = "flex";
