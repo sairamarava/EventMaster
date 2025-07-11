@@ -62,3 +62,4 @@ Desktop.ini
 
 # Vite cache
 .vite/
+.vercel
